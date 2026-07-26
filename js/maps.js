@@ -24,11 +24,13 @@ const TK = [
   { k: 'shrine', solid: true },                // 18
   { k: 'snow' },                               // 19
   { k: 'ice' },                                // 20
-  { k: 'cavegrass', enc: true }                // 21 洞窟の草むら（エンカウント）
+  { k: 'cavegrass', enc: true },               // 21 洞窟の草むら（エンカウント）
+  { k: 'roof3', solid: true }                  // 22 ジムの屋根
 ];
 const T = { GRASS: 0, TALL: 1, PATH: 2, SAND: 3, WATER: 4, TREE: 5, ROCK: 6, WALL: 7,
             ROOF: 8, ROOF2: 9, DOOR: 10, SIGN: 11, COUNTER: 12, FLOOR: 13, CAVE: 14,
-            CWALL: 15, FLOWER: 16, STAIR: 17, SHRINE: 18, SNOW: 19, ICE: 20, CAVEG: 21 };
+            CWALL: 15, FLOWER: 16, STAIR: 17, SHRINE: 18, SNOW: 19, ICE: 20, CAVEG: 21,
+            ROOF3: 22 };
 
 class MB {
   constructor(w, h, base) {
@@ -245,7 +247,7 @@ const LOOK = {
   b.house(4, 4, 7, 5, T.ROOF2, 3);      // センター door(7,8)
   b.house(15, 4, 7, 5, T.ROOF, 3);      // ショップ door(18,8)
   b.rect(9, 12, 18, 16, T.WALL);
-  b.rect(9, 12, 18, 15, T.ROOF);
+  b.rect(9, 12, 18, 15, T.ROOF3);
   b.at(13, 16, T.DOOR); b.at(14, 16, T.DOOR);
   b.at(12, 9, T.SIGN); b.at(20, 9, T.SIGN); b.at(8, 17, T.SIGN);
   b.hline(20, 13, 14, T.PATH); b.hline(21, 13, 14, T.PATH);
@@ -382,7 +384,7 @@ const LOOK = {
   b.house(4, 3, 7, 5, T.ROOF2, 3);      // センター door(7,7)
   b.house(16, 3, 7, 5, T.ROOF, 3);      // ショップ door(19,7)
   b.rect(13, 11, 22, 15, T.WALL);
-  b.rect(13, 11, 22, 14, T.ROOF2);
+  b.rect(13, 11, 22, 14, T.ROOF3);
   b.at(17, 15, T.DOOR); b.at(18, 15, T.DOOR);
   b.at(12, 8, T.SIGN); b.at(21, 8, T.SIGN); b.at(12, 16, T.SIGN);
   b.hline(20, 13, 14, T.PATH); b.hline(21, 13, 14, T.PATH);

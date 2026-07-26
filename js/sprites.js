@@ -562,6 +562,12 @@ function tileCanvas(kind, variant) {
       g.fillStyle = '#3d67a0'; for (let y = 0; y < 16; y += 4) g.fillRect(0, y, 16, 1);
       g.fillStyle = '#6c9ada'; for (let y = 1; y < 16; y += 4) g.fillRect(0, y, 16, 1);
       break;
+    case 'roof3':
+      g.fillStyle = '#6a5a8a'; g.fillRect(0, 0, 16, 16);
+      g.fillStyle = '#544672'; for (let y = 0; y < 16; y += 4) g.fillRect(0, y, 16, 1);
+      g.fillStyle = '#8676a8'; for (let y = 1; y < 16; y += 4) g.fillRect(0, y, 16, 1);
+      g.fillStyle = '#ffd75e'; g.fillRect(0, 6, 16, 1);
+      break;
     case 'door':
       g.fillStyle = '#e8e2d4'; g.fillRect(0, 0, 16, 16);
       g.fillStyle = '#6b4a24'; g.fillRect(3, 2, 10, 14);
