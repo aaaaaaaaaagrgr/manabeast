@@ -83,11 +83,61 @@ function updateField(dt) {
   if (OW.bumpCool) OW.bumpCool--;
 }
 
+/* ---------------- トレーナーの視線 ---------------- */
+function checkSight() {
+  const m = curMap();
+  for (const n of (m.npcs || [])) {
+    if (!n.trainer || n.special) continue;              // ジムリーダー等は話しかけ式
+    if (game.defeated[n.trainer.id] || !npcVisible(n)) continue;
+    const range = n.sight === undefined ? 5 : n.sight;
+    if (!range) continue;
+    const [dx, dy] = DIRV[n.dir || 'down'];
+    const [px_, py_] = [-dy, dx];                        // 直交方向（横のひろがり）
+    const wide = n.sightW === undefined ? 1 : n.sightW;
+    for (let i = 1; i <= range; i++) {
+      const cx = n.x + dx * i, cy = n.y + dy * i;
+      const t = tileAt(m, cx, cy);
+      if (t < 0 || TK[t].solid) break;                   // 正面がふさがれたらそこまで
+      for (let w = -wide; w <= wide; w++) {
+        const x = cx + px_ * w, y = cy + py_ * w;
+        const tw = tileAt(m, x, y);
+        if (tw < 0 || TK[tw].solid) continue;
+        if (game.px === x && game.py === y) return { n, dist: i, dx, dy };
+      }
+      if (npcAt(m, cx, cy)) break;
+    }
+  }
+  return null;
+}
+
+async function sightBattle(s) {
+  const { n, dist, dx, dy } = s;
+  const ox = n.x, oy = n.y;
+  Sound.se('encounter');
+  OW.excl = { x: n.x, y: n.y };
+  await sleep(650);
+  OW.excl = null;
+  for (let i = 0; i < dist - 1; i++) {                   // プレイヤーの手前まで歩みよる
+    if (solidAt(curMap(), n.x + dx, n.y + dy)) break;
+    n.x += dx; n.y += dy;
+    await sleep(140);
+  }
+  game.dir = { up: 'down', down: 'up', left: 'right', right: 'left' }[n.dir || 'down'];
+  for (const l of n.lines) await say(l, { name: n.name });
+  await trainerBattle(n);
+  if (game.defeated[n.trainer.id] && n.trainer.win) await say(n.trainer.win, { name: n.name });
+  n.x = ox; n.y = oy;                                    // もとの位置にもどす
+  MsgBox.active = false;
+}
+
 function afterStep() {
   const m = curMap();
   // ワープ
   const wp = (m.warps || []).find(w => w.x === game.px && w.y === game.py);
   if (wp) { runEvent(() => doWarp(wp)); return; }
+  // トレーナーの視線
+  const s = checkSight();
+  if (s) { runEvent(() => sightBattle(s)); return; }
   // エンカウント
   const t = tileAt(m, game.px, game.py);
   if (m.enc && TK[t] && TK[t].enc && game.party.length) {
@@ -364,9 +414,9 @@ SPECIAL.leader = async function (n) {
 /* --- ライバル戦 --- */
 function rivalTeam(stage) {
   const s = game.flags.rivalStarter || 4;
-  if (stage === 2) return [[12, 12], [10, 13], [s, 15]];
-  if (stage === 3) return [[13, 20], [26, 19], [16, 20], [s + 1, 22]];
-  return [[13, 29], [32, 29], [19, 30], [23, 30], [s + 2, 33]];
+  if (stage === 2) return [[12, 9], [10, 10], [s, 12]];
+  if (stage === 3) return [[13, 18], [26, 17], [16, 18], [s + 1, 20]];
+  return [[13, 28], [32, 28], [19, 29], [23, 29], [s + 2, 31]];
 }
 
 SPECIAL.rival2 = async function (n) {
@@ -418,7 +468,7 @@ SPECIAL.boss = async function (n) {
   await say('だが おまえの 目は まだ 燃えている。\n…見せてみよ、 その 光を！', { name: 'ノクス' });
   const res = await trainerBattle({
     name: 'やみの王 ノクス',
-    trainer: { id: 'boss', team: [[34, 31], [19, 32], [23, 32], [17, 33], [36, 36]], money: 12000 }
+    trainer: { id: 'boss', team: [[34, 30], [19, 31], [23, 31], [17, 32], [36, 34]], money: 12000 }
   }, { boss: true });
   if (res !== 'win') return;
   game.flags.bossdone = 1;
@@ -441,7 +491,7 @@ SPECIAL.lumina = async function (n) {
   await say('『あなたの 力を\n　この目で たしかめたい。』', { name: 'ルミナ' });
   game.flags.luminaDone = 1;
   await flashEncounter();
-  const res = await startBattle({ wild: makeMon(35, 40), bg: 'temple', boss: true });
+  const res = await startBattle({ wild: makeMon(35, 38), bg: 'temple', boss: true });
   await afterBattle(res);
   if (res === 'caught') {
     await say('ルミナは あなたの 相棒に なった！');
@@ -525,10 +575,13 @@ function drawField(g) {
     WG.globalAlpha = 1;
     WG.drawImage(charCanvas(n.look, n.dir || 'down', 0), n.x * 16 - cx, n.y * 16 - cy);
     if (n.trainer && !game.defeated[n.trainer.id] && !n.special) {
-      const bob = Math.sin(performance.now() / 300) * 1.5;
-      WG.fillStyle = '#ffe15e';
-      WG.fillRect(n.x * 16 - cx + 6, n.y * 16 - cy - 8 + bob, 4, 5);
-      WG.fillRect(n.x * 16 - cx + 6, n.y * 16 - cy - 2 + bob, 4, 2);
+      const big = OW.excl && OW.excl.x === n.x && OW.excl.y === n.y;
+      const bob = big ? -Math.abs(Math.sin(performance.now() / 90)) * 3 : Math.sin(performance.now() / 300) * 1.5;
+      const bx = n.x * 16 - cx + (big ? 5 : 6), by = n.y * 16 - cy - (big ? 11 : 8) + bob;
+      if (big) { WG.fillStyle = '#241a33'; WG.fillRect(bx - 2, by - 2, 10, 14); }
+      WG.fillStyle = big ? '#fff6b0' : '#ffe15e';
+      WG.fillRect(bx, by, big ? 6 : 4, big ? 7 : 5);
+      WG.fillRect(bx, by + (big ? 8 : 6), big ? 6 : 4, big ? 3 : 2);
     }
   } }); });
   const pxp = game.px * 16 + OW.ox - cx, pyp = game.py * 16 + OW.oy - cy;

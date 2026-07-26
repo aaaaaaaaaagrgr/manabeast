@@ -150,7 +150,26 @@ const Sound = (() => {
     }
   };
 
-  function stopMusic() { if (timer) { clearTimeout(timer); timer = null; } cur = null; }
+  // BGMは1ループぶんの音符をまとめて先行スケジュールしているので、
+  // 曲を止めるときは musicGain ごと切り離さないと前の曲が鳴り残って重なる。
+  function stopMusic() {
+    if (timer) { clearTimeout(timer); timer = null; }
+    cur = null;
+    if (!ctx) return;
+    if (musicGain) {
+      const old = musicGain;
+      const t = ctx.currentTime;
+      try {
+        old.gain.cancelScheduledValues(t);
+        old.gain.setValueAtTime(old.gain.value, t);
+        old.gain.linearRampToValueAtTime(0.0001, t + 0.05);
+      } catch (e) { }
+      setTimeout(() => { try { old.disconnect(); } catch (e) { } }, 400);
+    }
+    musicGain = ctx.createGain();
+    musicGain.gain.value = 0.42;
+    musicGain.connect(master);
+  }
 
   function schedule(name) {
     if (!ctx || !on) return;
@@ -182,16 +201,30 @@ const Sound = (() => {
     timer = setTimeout(() => { if (cur === name) schedule(name); }, dur * 1000 - 40);
   }
 
+  let want = null;   // 鳴らしたい曲（ミュート中でも覚えておく）
+
   return {
     resume,
-    toggle() { on = !on; if (!on) { stopMusic(); if (master) master.gain.value = 0; } else { if (master) master.gain.value = 0.5; } return on; },
+    toggle() {
+      on = !on;
+      if (!on) { stopMusic(); if (master) master.gain.value = 0; }
+      else {
+        if (master) master.gain.value = 0.5;
+        if (want) { const w = want; cur = null; stopMusic(); cur = w; schedule(w); }
+      }
+      return on;
+    },
     isOn() { return on; },
     play(name) {
-      init(); if (!ctx || !on) return;
+      init();
+      want = name;
+      if (!ctx || !on) return;
       if (cur === name) return;
-      stopMusic(); cur = name; schedule(name);
+      stopMusic();
+      cur = name;
+      schedule(name);
     },
-    stop() { stopMusic(); },
+    stop() { want = null; stopMusic(); },
     // ---- 効果音 ----
     se(kind) {
       init(); if (!ctx || !on) return;

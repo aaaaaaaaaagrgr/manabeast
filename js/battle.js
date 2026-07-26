@@ -216,6 +216,7 @@ async function evolveCheck(m) {
   Sound.play('victory');
   for (let i = 0; i < 110; i++) await sleep(24);
   const ei = Menus.indexOf(evoLayer); if (ei >= 0) Menus.splice(ei, 1);
+  Sound.play(B.on ? (B.music || 'battle') : mapBgm());
   const wasName = monName(m);
   m.sp = sp.evo.to;
   if (m.nick === null) { /* nickname keeps null → new species name */ }
@@ -509,7 +510,8 @@ async function startBattle(o) {
   B.myShowXp = my().xp / xpToNext(my().lv);
   game.seen[SPECIES[B.foe.sp].no] = 1;
 
-  Sound.play(o.boss ? 'boss' : 'battle');
+  B.music = o.boss ? 'boss' : 'battle';
+  Sound.play(B.music);
   Sound.se('encounter');
   OW.fade = 1;
   for (let i = 10; i >= 0; i--) { OW.fade = i / 10; await sleep(22); }

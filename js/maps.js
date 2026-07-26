@@ -25,12 +25,13 @@ const TK = [
   { k: 'snow' },                               // 19
   { k: 'ice' },                                // 20
   { k: 'cavegrass', enc: true },               // 21 洞窟の草むら（エンカウント）
-  { k: 'roof3', solid: true }                  // 22 ジムの屋根
+  { k: 'roof3', solid: true },                 // 22 ジムの屋根
+  { k: 'block', solid: true }                  // 23 屋内の仕切りブロック
 ];
 const T = { GRASS: 0, TALL: 1, PATH: 2, SAND: 3, WATER: 4, TREE: 5, ROCK: 6, WALL: 7,
             ROOF: 8, ROOF2: 9, DOOR: 10, SIGN: 11, COUNTER: 12, FLOOR: 13, CAVE: 14,
             CWALL: 15, FLOWER: 16, STAIR: 17, SHRINE: 18, SNOW: 19, ICE: 20, CAVEG: 21,
-            ROOF3: 22 };
+            ROOF3: 22, BLOCK: 23 };
 
 class MB {
   constructor(w, h, base) {
@@ -212,20 +213,20 @@ const LOOK = {
   b.at(14, 23, T.SIGN);
   defMap('route1', {
     name: '1ばん道路', w: 30, h: 26, t: b.t, bgm: 'route',
-    enc: { rate: .12, table: [[10, 3, 6, 30], [12, 3, 6, 25], [1, 3, 5, 8], [4, 3, 5, 8],
-                              [7, 3, 5, 8], [24, 4, 6, 12], [26, 3, 6, 9]] },
+    enc: { rate: .12, table: [[10, 2, 4, 30], [12, 2, 4, 25], [1, 2, 3, 8], [4, 2, 3, 8],
+                              [7, 2, 3, 8], [24, 3, 4, 12], [26, 2, 4, 9]] },
     warps: [{ x: 15, y: 25, to: 'village', tx: 6, ty: 3, dir: 'down' },
             { x: 16, y: 25, to: 'village', tx: 7, ty: 3, dir: 'down' },
             { x: 15, y: 0, to: 'akane', tx: 13, ty: 19, dir: 'up' },
             { x: 16, y: 0, to: 'akane', tx: 14, ty: 19, dir: 'up' }],
     npcs: [
-      { x: 15, y: 20, dir: 'down', look: LOOK.boy, name: 'たんけんキッズ ソラ',
+      { x: 15, y: 20, dir: 'down', sight: 5, look: LOOK.boy, name: 'たんけんキッズ ソラ',
         lines: ['見つけた！ おれと しょうぶだ！'],
-        trainer: { id: 't1', team: [[10, 5], [12, 5]], money: 300,
+        trainer: { id: 't1', team: [[10, 3], [12, 4]], money: 300,
           win: 'つ つよい…！\n北の アカネの町には ジムが あるよ。' } },
-      { x: 20, y: 14, dir: 'left', look: LOOK.girl, name: 'むしとりガール ナナ',
+      { x: 19, y: 15, dir: 'left', sight: 5, look: LOOK.girl, name: 'むしとりガール ナナ',
         lines: ['かわいい マナビースト\nつかまえた？ 見せっこしよ！'],
-        trainer: { id: 't2', team: [[26, 6], [24, 6]], money: 340,
+        trainer: { id: 't2', team: [[26, 4], [24, 5]], money: 340,
           win: 'まけちゃった…\nでも うちの子 かわいいでしょ？' } },
       { x: 8, y: 16, dir: 'down', look: LOOK.old, name: 'たびびと',
         lines: ['クリスタルは 町の ショップで\n買えるぞ。 多めに 持っていけ。',
@@ -291,31 +292,39 @@ const LOOK = {
    6. アカネジム（室内）
    ========================================================= */
 {
-  const b = new MB(14, 18, T.WALL);
-  b.room(1, 1, 12, 16);
+  // ジグザグの通路。各通路にトレーナーが立ち、視線を避けて進めない構造。
+  const b = new MB(14, 18, T.BLOCK);
+  b.hline(0, 0, 13, T.WALL); b.vline(0, 0, 17, T.WALL);
+  b.vline(13, 0, 17, T.WALL); b.hline(17, 0, 13, T.WALL);
+  b.rect(6, 16, 7, 16, T.FLOOR);
+  b.rect(5, 15, 12, 15, T.FLOOR);
+  b.rect(12, 12, 12, 15, T.FLOOR);
+  b.rect(1, 11, 12, 12, T.FLOOR);
+  b.rect(1, 8, 1, 11, T.FLOOR);
+  b.rect(1, 7, 12, 8, T.FLOOR);
+  b.rect(12, 4, 12, 7, T.FLOOR);
+  b.rect(1, 2, 12, 3, T.FLOOR);
   b.at(6, 17, T.DOOR); b.at(7, 17, T.DOOR);
-  b.rect(2, 4, 3, 5, T.SHRINE); b.rect(10, 4, 11, 5, T.SHRINE);
-  b.rect(2, 10, 3, 11, T.SHRINE); b.rect(10, 10, 11, 11, T.SHRINE);
-  b.rect(6, 2, 7, 2, T.COUNTER);
+  b.at(4, 2, T.SHRINE); b.at(9, 2, T.SHRINE);
   defMap('gym1', {
     name: 'アカネジム', w: 14, h: 18, t: b.t, indoor: true, bgm: 'gym',
     warps: [{ x: 6, y: 17, to: 'akane', tx: 13, ty: 17, dir: 'down' },
             { x: 7, y: 17, to: 'akane', tx: 14, ty: 17, dir: 'down' }],
     npcs: [
-      { x: 4, y: 12, dir: 'right', look: LOOK.camp, name: 'ジムトレーナー ホムラ',
+      { x: 1, y: 12, dir: 'right', sight: 12, look: LOOK.camp, name: 'ジムトレーナー ホムラ',
         lines: ['ここから先は 炎の道！\n熱くなれるか？'],
-        trainer: { id: 'g1a', team: [[4, 11], [29, 12]], money: 700,
+        trainer: { id: 'g1a', team: [[4, 8], [29, 9]], money: 700,
           win: 'あつい たたかいだった…！' } },
-      { x: 9, y: 8, dir: 'left', look: LOOK.girl, name: 'ジムトレーナー ヒバナ',
+      { x: 12, y: 8, dir: 'left', sight: 12, look: LOOK.girl, name: 'ジムトレーナー ヒバナ',
         lines: ['火の粉が 舞うわよ！'],
-        trainer: { id: 'g1b', team: [[4, 12], [16, 12]], money: 700,
+        trainer: { id: 'g1b', team: [[4, 9], [16, 9]], money: 700,
           win: 'まぶしい…\nあなたの ほうが 熱いわ。' } },
-      { x: 6, y: 4, dir: 'down', look: LOOK.gym1, name: 'ヒノ', id: 'leader1',
+      { x: 6, y: 2, dir: 'down', look: LOOK.gym1, name: 'ヒノ', id: 'leader1',
         special: 'leader',
         badge: 'badge1', badgeName: 'ファイアバッジ',
         lines: ['よく来た！ おれが アカネジムの\nリーダー ヒノだ。',
                 'マナビーストは 心で燃える。\nお前の 火は 本物か…\n見せてもらうぞ！'],
-        trainer: { id: 'leader1', team: [[4, 13], [29, 14], [5, 16]], money: 2000,
+        trainer: { id: 'leader1', team: [[4, 10], [29, 11], [5, 13]], money: 2000,
           win: 'ハハッ！ みごとだ！\nお前の 炎は 本物だった！' },
         after: 'ファイアバッジが あれば\nどこへでも 行ける。\n強いやつを 探しにいけ！',
         reward: { item: 'potion2', n: 3 } }
@@ -341,25 +350,28 @@ const LOOK = {
   b.scatter(T.TREE, 12, T.GRASS);
   b.scatter(T.FLOWER, 12, T.GRASS);
   b.rect(6, 14, 18, 15, T.SAND);
+  // 東西を分ける林。通れるのは y=9..14 の切れ目だけ（つりびとの視線が張っている）
+  for (let y = 2; y <= 8; y++) if (b.get(14, y) !== T.WATER) b.at(14, y, T.TREE);
+  for (let y = 15; y <= 23; y++) if (b.get(14, y) !== T.WATER) b.at(14, y, T.TREE);
   b.at(0, 12, T.PATH); b.at(0, 13, T.PATH);
   b.hline(0, 21, 22, T.PATH);
   b.at(3, 11, T.SIGN);
   defMap('route2', {
     name: '2ばん道路', w: 30, h: 26, t: b.t, bgm: 'route',
-    enc: { rate: .13, table: [[22, 8, 12, 26], [12, 8, 11, 18], [10, 8, 11, 14],
-                              [7, 9, 12, 10], [30, 10, 13, 10], [26, 8, 11, 12], [16, 9, 12, 10]] },
+    enc: { rate: .13, table: [[22, 6, 9, 26], [12, 6, 9, 18], [10, 6, 9, 14],
+                              [7, 7, 9, 10], [30, 8, 10, 10], [26, 6, 9, 12], [16, 7, 9, 10]] },
     warps: [{ x: 0, y: 12, to: 'akane', tx: 26, ty: 9, dir: 'left' },
             { x: 0, y: 13, to: 'akane', tx: 26, ty: 10, dir: 'left' },
             { x: 21, y: 0, to: 'mizuho', tx: 13, ty: 20, dir: 'up' },
             { x: 22, y: 0, to: 'mizuho', tx: 14, ty: 20, dir: 'up' }],
     npcs: [
-      { x: 13, y: 14, dir: 'down', look: LOOK.fish, name: 'つりびと ミナモ',
+      { x: 13, y: 15, dir: 'up', sight: 6, look: LOOK.fish, name: 'つりびと ミナモ',
         lines: ['この湖には 主が いるらしい。\nおっと きみ トレーナーだね？'],
-        trainer: { id: 't3', team: [[22, 11], [22, 12], [7, 12]], money: 620,
+        trainer: { id: 't3', team: [[22, 9], [22, 10], [7, 10]], money: 620,
           win: 'つれなかったのは おれの ほうか…' } },
-      { x: 20, y: 8, dir: 'left', look: LOOK.camp, name: 'キャンパー タケ',
+      { x: 19, y: 8, dir: 'right', sight: 5, look: LOOK.camp, name: 'キャンパー タケ',
         lines: ['山より 湖！ 湖より しょうぶ！'],
-        trainer: { id: 't4', team: [[16, 12], [10, 12]], money: 560,
+        trainer: { id: 't4', team: [[16, 10], [10, 10]], money: 560,
           win: 'いい勝負だった。 また会おう！' } },
       { x: 25, y: 20, dir: 'up', look: LOOK.girl, name: 'ピクニックガール',
         lines: ['ミズホの街は 水の街。\nジムリーダーの ナギさんは\nとっても つよいのよ。'] },
@@ -423,30 +435,37 @@ const LOOK = {
    9. ミズホジム（室内）
    ========================================================= */
 {
-  const b = new MB(14, 18, T.WALL);
-  b.room(1, 1, 12, 16);
+  // 水路のあいだを渡る一本道。gym1 と左右対称。
+  const b = new MB(14, 18, T.WATER);
+  b.hline(0, 0, 13, T.WALL); b.vline(0, 0, 17, T.WALL);
+  b.vline(13, 0, 17, T.WALL); b.hline(17, 0, 13, T.WALL);
+  b.rect(6, 16, 7, 16, T.FLOOR);
+  b.rect(1, 15, 8, 15, T.FLOOR);
+  b.rect(1, 12, 1, 15, T.FLOOR);
+  b.rect(1, 11, 12, 12, T.FLOOR);
+  b.rect(12, 8, 12, 11, T.FLOOR);
+  b.rect(1, 7, 12, 8, T.FLOOR);
+  b.rect(1, 4, 1, 7, T.FLOOR);
+  b.rect(1, 2, 12, 3, T.FLOOR);
   b.at(6, 17, T.DOOR); b.at(7, 17, T.DOOR);
-  b.rect(2, 3, 4, 6, T.WATER); b.rect(9, 3, 11, 6, T.WATER);
-  b.rect(2, 10, 4, 13, T.WATER); b.rect(9, 10, 11, 13, T.WATER);
-  b.rect(6, 2, 7, 2, T.COUNTER);
   defMap('gym2', {
     name: 'ミズホジム', w: 14, h: 18, t: b.t, indoor: true, bgm: 'gym',
     warps: [{ x: 6, y: 17, to: 'mizuho', tx: 17, ty: 16, dir: 'down' },
             { x: 7, y: 17, to: 'mizuho', tx: 18, ty: 16, dir: 'down' }],
     npcs: [
-      { x: 6, y: 12, dir: 'down', look: LOOK.fish, name: 'ジムトレーナー ウミ',
+      { x: 12, y: 12, dir: 'left', sight: 12, look: LOOK.fish, name: 'ジムトレーナー ウミ',
         lines: ['流れに さからえるかな？'],
-        trainer: { id: 'g2a', team: [[22, 15], [30, 15]], money: 900,
+        trainer: { id: 'g2a', team: [[22, 12], [30, 12]], money: 900,
           win: 'ながされた…！' } },
-      { x: 7, y: 8, dir: 'up', look: LOOK.boy, name: 'ジムトレーナー シオ',
+      { x: 1, y: 8, dir: 'right', sight: 12, look: LOOK.boy, name: 'ジムトレーナー シオ',
         lines: ['水は かたちを 変えて せまる！'],
-        trainer: { id: 'g2b', team: [[8, 16], [22, 15]], money: 900,
+        trainer: { id: 'g2b', team: [[8, 13], [22, 12]], money: 900,
           win: 'きみの 勢いには かなわないな。' } },
-      { x: 6, y: 4, dir: 'down', look: LOOK.gym2, name: 'ナギ', id: 'leader2',
+      { x: 6, y: 2, dir: 'down', look: LOOK.gym2, name: 'ナギ', id: 'leader2',
         special: 'leader', badge: 'badge2', badgeName: 'アクアバッジ',
         lines: ['ようこそ ミズホジムへ。\nわたしが リーダーの ナギ。',
                 'water は 静かに すべてを のみこむ。\n…さあ 見せてもらうわ。'],
-        trainer: { id: 'leader2', team: [[30, 17], [8, 18], [23, 20]], money: 3000,
+        trainer: { id: 'leader2', team: [[30, 14], [8, 15], [23, 17]], money: 3000,
           win: 'みごと…\nあなたの 流れは 止められなかった。' },
         after: '樹海の 奥には 大樹の 守り手が いる。\n気をつけて いってらっしゃい。',
         reward: { item: 'potion3', n: 3 } }
@@ -473,13 +492,15 @@ const LOOK = {
   b.rect(13, 3, 20, 5, T.FLOWER);
   b.rect(15, 2, 18, 2, T.SHRINE);
   b.scatter(T.TREE, 10, T.TALL);
+  // 大樹の祠へ通じる切れ目は x=16,17 だけ（きこりの視線が張っている）
+  for (let x = 2; x <= 29; x++) if (x !== 16 && x !== 17) b.at(x, 8, T.TREE);
   b.vline(16, 25, 27, T.PATH); b.vline(17, 25, 27, T.PATH);
   b.at(15, 25, T.SIGN);
   defMap('forest', {
     name: '樹海', w: 32, h: 28, t: b.t, bgm: 'forest',
-    enc: { rate: .14, table: [[24, 14, 18, 20], [26, 14, 17, 16], [1, 14, 18, 12],
-                              [27, 16, 19, 10], [18, 15, 18, 12], [33, 16, 19, 10],
-                              [2, 17, 20, 8], [11, 15, 18, 12]] },
+    enc: { rate: .14, table: [[24, 12, 15, 20], [26, 12, 15, 16], [1, 12, 15, 12],
+                              [27, 13, 16, 10], [18, 13, 15, 12], [33, 13, 16, 10],
+                              [2, 14, 17, 8], [11, 13, 15, 12]] },
     warps: [{ x: 16, y: 27, to: 'mizuho', tx: 13, ty: 1, dir: 'down' },
             { x: 17, y: 27, to: 'mizuho', tx: 14, ty: 1, dir: 'down' },
             { x: 20, y: 2, to: 'mountain', tx: 15, ty: 28, dir: 'up', need: 'badge3',
@@ -487,17 +508,17 @@ const LOOK = {
             { x: 21, y: 2, to: 'mountain', tx: 16, ty: 28, dir: 'up', need: 'badge3',
               needMsg: 'ここから先は 大樹の 守り手\nシオンに みとめられた者だけが\n通れる 道だ。' }],
     npcs: [
-      { x: 16, y: 18, dir: 'down', look: LOOK.hiker, name: 'きこり ゲン',
+      { x: 16, y: 12, dir: 'up', sight: 5, look: LOOK.hiker, name: 'きこり ゲン',
         lines: ['森を なめるなよ 若いの！'],
-        trainer: { id: 't5', team: [[28, 18], [17, 18]], money: 1000,
+        trainer: { id: 't5', team: [[28, 16], [17, 16]], money: 1000,
           win: 'その根性 気に入った！' } },
-      { x: 9, y: 12, dir: 'right', look: LOOK.girl, name: 'アロマガール ハナ',
+      { x: 9, y: 12, dir: 'right', sight: 5, look: LOOK.girl, name: 'アロマガール ハナ',
         lines: ['いい香り でしょ？\nねむらせて あげる。'],
-        trainer: { id: 't6', team: [[25, 19], [27, 18]], money: 1100,
+        trainer: { id: 't6', team: [[25, 17], [27, 16]], money: 1100,
           win: '目が さめちゃった…！' } },
-      { x: 26, y: 14, dir: 'left', look: LOOK.dark, name: 'ふしんしゃ',
+      { x: 26, y: 14, dir: 'up', sight: 5, look: LOOK.dark, name: 'ふしんしゃ',
         lines: ['ククッ… 闇の神殿へ 行くつもりか？\nその前に 力を 見せてみろ。'],
-        trainer: { id: 't7', team: [[18, 19], [33, 20]], money: 1200,
+        trainer: { id: 't7', team: [[18, 17], [33, 18]], money: 1200,
           win: 'ぐっ… ノクス様が お待ちだ…' } },
       { x: 13, y: 6, dir: 'down', look: LOOK.rival, name: 'カイ', id: 'rival3',
         special: 'rival3' },
@@ -505,7 +526,7 @@ const LOOK = {
         special: 'leader', badge: 'badge3', badgeName: 'リーフバッジ',
         lines: ['ここは 大樹の 祠。\nぼくは 森の 守り手 シオン。',
                 'この先の 山道は きけんだ。\n通りたければ ぼくを 越えていって。'],
-        trainer: { id: 'leader3', team: [[27, 20], [25, 21], [3, 23]], money: 4000,
+        trainer: { id: 'leader3', team: [[27, 18], [25, 19], [3, 21]], money: 4000,
           win: 'すごい…\n森が きみを みとめたよ。' },
         after: '北の 雷鳴の山には ライガさんがいる。\n気をつけて。',
         reward: { item: 'full', n: 2 } }
@@ -541,9 +562,9 @@ const LOOK = {
   b.at(13, 27, T.SIGN);
   defMap('mountain', {
     name: '雷鳴の山道', w: 30, h: 30, t: b.t, bgm: 'mountain',
-    enc: { rate: .14, table: [[16, 20, 24, 20], [14, 20, 24, 18], [28, 21, 24, 14],
-                              [29, 22, 25, 12], [31, 22, 25, 12], [11, 20, 23, 12],
-                              [13, 22, 25, 8], [32, 26, 28, 4]] },
+    enc: { rate: .14, table: [[16, 19, 22, 20], [14, 19, 22, 18], [28, 20, 22, 14],
+                              [29, 20, 23, 12], [31, 20, 23, 12], [11, 19, 21, 12],
+                              [13, 20, 23, 8], [32, 24, 26, 4]] },
     warps: [{ x: 15, y: 29, to: 'forest', tx: 20, ty: 3, dir: 'down' },
             { x: 16, y: 29, to: 'forest', tx: 21, ty: 3, dir: 'down' },
             { x: 15, y: 2, to: 'temple', tx: 15, ty: 26, dir: 'up', need: 'badge4',
@@ -551,17 +572,17 @@ const LOOK = {
             { x: 16, y: 2, to: 'temple', tx: 16, ty: 26, dir: 'up', need: 'badge4',
               needMsg: '闇の神殿の 門は かたく とじている。\n4つの バッジの 光が 必要だ…' }],
     npcs: [
-      { x: 15, y: 24, dir: 'down', look: LOOK.hiker, name: 'やまおとこ イワオ',
+      { x: 15, y: 24, dir: 'down', sight: 5, look: LOOK.hiker, name: 'やまおとこ イワオ',
         lines: ['この先は 雷が おちる。\n覚悟が あるやつだけ 通れ！'],
-        trainer: { id: 't8', team: [[17, 23], [29, 23]], money: 1600,
+        trainer: { id: 't8', team: [[17, 22], [29, 22]], money: 1600,
           win: 'ぬぅ… 見上げた やつだ。' } },
-      { x: 24, y: 10, dir: 'down', look: LOOK.girl, name: 'たんけんか ミオ',
+      { x: 24, y: 10, dir: 'down', sight: 5, look: LOOK.girl, name: 'たんけんか ミオ',
         lines: ['山の 電気は ビリビリ するわ！'],
-        trainer: { id: 't9', team: [[15, 24], [13, 24]], money: 1700,
+        trainer: { id: 't9', team: [[15, 23], [13, 23]], money: 1700,
           win: 'しびれる 強さね…' } },
-      { x: 6, y: 18, dir: 'right', look: LOOK.dark, name: 'やみのしもべ',
+      { x: 6, y: 18, dir: 'up', sight: 5, look: LOOK.dark, name: 'やみのしもべ',
         lines: ['ノクス様が 目覚める。\nここで 消えてもらう！'],
-        trainer: { id: 't10', team: [[19, 24], [31, 24], [23, 25]], money: 2000,
+        trainer: { id: 't10', team: [[19, 23], [31, 23], [23, 24]], money: 2000,
           win: 'ばかな… 光など…！' } },
       { x: 20, y: 5, dir: 'left', look: LOOK.old, name: 'せんにん',
         lines: ['よくぞ ここまで 来た。\nこれを 持っていくがよい。'],
@@ -570,7 +591,7 @@ const LOOK = {
         special: 'leader', badge: 'badge4', badgeName: 'ボルトバッジ',
         lines: ['ここまで 来たか 若き トレーナー！\nおれは 山の 番人 ライガ！',
                 '闇の神殿へ 行くなら\nおれの 雷を 受けてから 行け！'],
-        trainer: { id: 'leader4', team: [[15, 26], [13, 27], [32, 29]], money: 6000,
+        trainer: { id: 'leader4', team: [[15, 25], [13, 26], [32, 28]], money: 6000,
           win: 'ハハハ！ しびれたぞ！\n神殿の 扉は もう 開いている！' },
         after: '闇の神殿の 奥に ノクスがいる。\n世界を たのんだぞ！',
         reward: { item: 'full', n: 3 } }
@@ -605,19 +626,19 @@ const LOOK = {
   b.hline(27, 15, 16, T.PATH); b.hline(26, 15, 16, T.PATH);
   defMap('temple', {
     name: '闇の神殿', w: 30, h: 28, t: b.t, bgm: 'temple', dark: true,
-    enc: { rate: .15, table: [[18, 26, 30, 18], [33, 26, 30, 16], [19, 28, 32, 12],
-                              [34, 29, 32, 8], [31, 27, 30, 14], [23, 28, 31, 12],
-                              [6, 28, 30, 6], [9, 28, 30, 6], [3, 28, 30, 6]] },
+    enc: { rate: .15, table: [[18, 25, 28, 18], [33, 25, 28, 16], [19, 27, 30, 12],
+                              [34, 28, 30, 8], [31, 26, 28, 14], [23, 27, 29, 12],
+                              [6, 27, 29, 6], [9, 27, 29, 6], [3, 27, 29, 6]] },
     warps: [{ x: 15, y: 27, to: 'mountain', tx: 15, ty: 3, dir: 'down' },
             { x: 16, y: 27, to: 'mountain', tx: 16, ty: 3, dir: 'down' }],
     npcs: [
-      { x: 16, y: 20, dir: 'down', look: LOOK.dark, name: 'しんかん ヨル',
+      { x: 16, y: 20, dir: 'down', sight: 5, look: LOOK.dark, name: 'しんかん ヨル',
         lines: ['光を もつ者よ。\nここから 先は 闇の領域。'],
-        trainer: { id: 't11', team: [[19, 29], [34, 29]], money: 3000,
+        trainer: { id: 't11', team: [[19, 28], [34, 28]], money: 3000,
           win: '…この 神殿でさえ\nお前を 止められぬのか。' } },
-      { x: 8, y: 12, dir: 'down', look: LOOK.dark, name: 'しんかん シノ',
+      { x: 8, y: 14, dir: 'up', sight: 5, look: LOOK.dark, name: 'しんかん シノ',
         lines: ['引き返すなら 今のうちだ！'],
-        trainer: { id: 't12', team: [[23, 29], [31, 29], [6, 30]], money: 3200,
+        trainer: { id: 't12', team: [[23, 28], [31, 28], [6, 29]], money: 3200,
           win: 'ノクス様… おゆるしを…' } },
       { x: 16, y: 8, dir: 'down', look: LOOK.rival, name: 'カイ', id: 'rival4',
         special: 'rival4', gone: 'rival4' },
